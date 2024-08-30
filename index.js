@@ -131,12 +131,11 @@ function updateCarousel(images) {
     Carousel.appendCarousel(imgElement);
   });
 
-  // Initialize or restart the carousel functionality (depends on your carousel library)
-  Carousel.start(); // Example, replace with actual initialization if needed
+  Carousel.start();
 }
 
 function populateBreedSelect(breeds) {
-  breedSelect.innerHTML = ""; // Clear existing options
+  breedSelect.innerHTML = "";
 
   breeds.forEach((breed) => {
     const option = document.createElement("option");
@@ -170,6 +169,8 @@ async function getFavourites() {
     console.error("Error fetching favourites:", error);
   }
 }
+
+//axios code
 
 /*
  * 2. Create an event handler for breedSelect that does the following:
