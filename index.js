@@ -220,17 +220,92 @@ async function getFavourites() {
 //  *   once or twice per request to this API. This is still a concept worth familiarizing yourself
 //  *   with for future projects.
 //  */
-// function updateProgress(event) {
-//   if (event.lengthComputable) {
-//       const percentComplete = (event.loaded / event.total) * 100;
-//       progressBar.style.width = `${percentComplete}%`;
-//   }
-// }
+function updateProgress(event) {
+  if (event.lengthComputable) {
+    const percentComplete = (event.loaded / event.total) * 100;
+    progressBar.style.width = `${percentComplete}%`;
+  }
+}
+
 /**
  * 7. As a final element of progress indication, add the following to your axios interceptors:
  * - In your request interceptor, set the body element's cursor style to "progress."
  * - In your response interceptor, remove the progress cursor style from the body element.
  */
+import axios from "axios";
+import * as Carousel from "./Carousel.js";
+
+axios.defaults.baseURL = "https://api.thecatapi.com/v1";
+axios.defaults.headers.common["x-api-key"] =
+  "live_uwVpJpUOl63InRwFz5LYpLVooFYJ1rhQb54HdObcyki3IrIxmVCuxpXgkvMvcUNT";
+
+// Request Interceptor
+axios.interceptors.request.use(
+  (config) => {
+    console.log(
+      `Starting request to ${config.url} at ${new Date().toISOString()}`
+    );
+    progressBar.style.width = "0%"; // Reset progress bar
+    document.body.style.cursor = "progress"; // Change cursor
+    if (config.onDownloadProgress) {
+      config.onDownloadProgress = updateProgress;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+// Response Interceptor
+axios.interceptors.response.use(
+  (response) => {
+    console.log(
+      `Request to ${
+        response.config.url
+      } completed at ${new Date().toISOString()}`
+    );
+    document.body.style.cursor = ""; // Reset cursor
+    return response;
+  },
+  (error) => {
+    document.body.style.cursor = ""; // Reset cursor on error
+    return Promise.reject(error);
+  }
+);
+
+export async function favourite(imgId) {
+  try {
+    // Get current favourites
+    const { data: favourites } = await axios.get("/favourites");
+    const isFavourited = favourites.some((fav) => fav.image_id === imgId);
+
+    if (isFavourited) {
+      // Remove from favourites
+      await axios.delete(`/favourites/${imgId}`);
+    } else {
+      // Add to favourites
+      await axios.post("/favourites", { image_id: imgId });
+    }
+
+    const selectedBreedId = breedSelect.value;
+    if (selectedBreedId) fetchBreedData(selectedBreedId);
+  } catch (error) {
+    console.error("Error toggling favourite:", error);
+  }
+}
+
+async function getFavourites() {
+  try {
+    const response = await axios.get("/favourites");
+    const favourites = response.data;
+
+    // Clear and update the carousel with favourites
+    updateCarousel(favourites.map((fav) => ({ url: fav.image.url })));
+  } catch (error) {
+    console.error("Error fetching favourites:", error);
+  }
+}
+
+getFavouritesBtn.addEventListener("click", getFavourites);
 
 /**
  * 8. To practice posting data, we'll create a system to "favourite" certain images.
@@ -243,6 +318,7 @@ async function getFavourites() {
  *   you delete that favourite using the API, giving this function "toggle" functionality.
  * - You can call this function by clicking on the heart at the top right of any image.
  */
+
 /**
  * 9. Test your favourite() function by creating a getFavourites() function.
  * - Use Axios to get all of your favourites from the cat API.
